@@ -27,7 +27,7 @@ rpc.setModule('profile', new Profile());
 const { json, send } = require('micro');
 // вызов механизма rpc, например, внутри модуля micro
 module.exports = async (req, res) => {
-  const action = json(req, { limit = '0.3mb', encoding = 'utf8' });
+  const action = await json(req, { limit = '0.3mb', encoding = 'utf8' });
   try {
     send(res, 200, await rpc.call({ req, res }, action));
   } catch(err) {
@@ -48,7 +48,7 @@ RPC.Error = MyError;
 
 const { json, send } = require('micro');
 module.exports = async (req, res) => {
-  const action = json(req, { limit = '0.3mb', encoding = 'utf8' });
+  const action = await json(req, { limit = '0.3mb', encoding = 'utf8' });
   try {
     return send(res, 200, await rpc.call({ req, res }, action));
   } catch(err) {

@@ -13,7 +13,7 @@
     "lint": "./node_modules/eslint/bin/eslint.js ./",
     "toPublish": "tarball=\"$(npm pack .)\"; wc -c \"${tarball}\"; tar tvf \"${tarball}\"; rm \"${tarball}\";"
   },
-  "tags": [
+  "keywords": [
     "rpc",
     "micro",
     "small",
