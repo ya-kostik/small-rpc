@@ -88,7 +88,7 @@ rpc.setModule('profile', new Profile());
 ```
 
 ### Middleware
-Вы можете использовать `middleware` функции, чтобы определять уровни доступа и дополнительную бизнес-логику.
+Вы можете использовать `middleware`-функции, чтобы определять уровни доступа и дополнительную бизнес-логику.
 
 `Middleware` бывают четырех типов:
 1. Все запросы
@@ -119,13 +119,22 @@ rpc.use('mongoose.Profile.login', (payload, action) => {
 });
 ```
 
+При вызове в `middleware` передается:
+`payload` — формируется при вызове `rpc`
+`action` — объект действия `rpc`
+`rpc` — экземляр `rpc` который вызывает `middleware`
+
+
 Чтобы остановить поток выполнения `middleware` нужно просто вернуть `false` из той `middleware` на которой вы хотите остановиться.
+
 
 ```javascript
 rpc.use((payload, action) => {
   if (!action.jwt) return false;
 });
 ```
+
+Также `middleware` могут быть объектами. Чтобы использовать такую `middleware` нужно определить в объекте метод `call`, аналогичный функциональной версии.
 
 ## Возвращаемый `action`
 
@@ -187,3 +196,58 @@ rpc.use((payload, action) => {
 - `merge` — если передать как `true`, то ответные данные будут лежать в корне действия, а не поля `payload`. Учтите, что `type` и `id` могут быть перекрыты в этом случае. Если результатом выполнения метода оказался не объект, то `merge` не будет иметь действия, и данные все равно будут находиться внутри поля `payload`
 - `filter` — массив полей, которые нужно вернуть, если в ответе от метода был получен объект
 - `errorType` — тип который будет передан в ответном `action` когда произойдет ошибка вызова (catch любой ошибки). Если задать как `null` будет использован тип по-умолчанию. (Только при `safeCall` или ручном модерировании ошибок).
+
+## Middleware из коробки
+
+Для удобства в директории `/middlewares` есть несколько готовых `middleware` (пока только одна).
+
+### Whitelist
+
+Белый список: ограничивает библиотеки/модули/методы, который могут быть вызваны.
+
+Чтобы её использовать, нужно создать экземляр класса, и передать в качестве аргумента список доступных методов:
+```javascript
+const whitelist = new Whitelist([
+  'main.mail.send',
+  'main.mail.get',
+  'main.filters',
+  'db.logs',
+  'monitoring'
+]);
+// Подключаем middleware
+rpc.use(whitelist);
+```
+
+Список можно подключать не только массивом, но и объектом:
+```javascript
+const whitelist = new Whitelist({
+  main: {
+    mail: {
+      send: true,
+      get: true
+    },
+    filters: true
+  },
+  db: {
+    logs: true
+  },
+  monitoring: true
+});
+// Подключаем middleware
+rpc.use(whitelist);
+```
+
+Если очень хочется, то можно задать и через Map:
+```javascript
+const whitelist = new Whitelist(
+  new Map([
+    ['main.mail.send', true],
+    ['main.mail.get', true],
+    ['main.filters', true],
+    ['db.logs', true],
+    ['monitoring', true]
+  ])
+);
+// Подключаем middleware
+rpc.use(whitelist);
+```
