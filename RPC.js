@@ -4,6 +4,16 @@ const pick = require('lodash/pick');
 const TYPES = require('./RPC.TYPES');
 
 /**
+ * Middleware — is a function or object with call method
+ * Receive: payload, action and rpc instance
+ * Use it for your authorisation logic,
+ * or other checks and preprocessings of action and payload
+ * @typedef Middleware
+ * @type {(Function|Object)}
+ */
+
+
+/**
  * Small remote procedure call lib
  * @class RPC
  * @prop {Object} libs — hash of all libs
@@ -50,6 +60,18 @@ class RPC {
       split.unshift('main');
     }
     return split;
+  }
+
+  /**
+   * return true, if middleware is a middleware
+   * @param  {Middleware}  middleware function or object with call method
+   * @return {Boolean}          result of test
+   */
+  isMiddleware(middleware) {
+    if (!middleware) return false;
+    if (isFunction(middleware)) return true;
+    if (middleware && middleware.call) return true;
+    return false;
   }
 
   /**
@@ -144,7 +166,7 @@ class RPC {
    * rpc(module, middleware) to add middleware for a specific module,
    * by name with dot notation (lib.module)
    * @param  {String} name       of lib or name.lib
-   * @param  {Function} middleware
+   * @param  {Middleware} middleware
    * @return {RPC}               this
    */
   use(name, middleware) {
@@ -152,7 +174,7 @@ class RPC {
       middleware = name;
       name = null;
     }
-    if (!isFunction(middleware)) {
+    if (!this.isMiddleware(middleware)) {
       throw new TypeError('Middleware is not a function');
     }
     if (!name) {
@@ -194,7 +216,9 @@ class RPC {
 
   /**
    * create doted path from action params
-   * @param  {Object} action
+   * @param {Object} action
+   * @param {Boolean} [isArray=false] path will be an array, not a string
+   * @param {Boolean} [addMethod=false] add method or event into a path
    * @return {String|Array}
    */
   makePathFromAction(action, isArray = false, addMethod = false) {
@@ -232,6 +256,7 @@ class RPC {
     let name = '';
     for (const position of positions) {
       let middlewares;
+
       if (position === 'all') {
         middlewares = this.middlewares;
       } else {
@@ -240,9 +265,15 @@ class RPC {
         else name += names.method;
         middlewares = this[`${position}sMiddlewares`][name];
       }
-      if (middlewares && middlewares.length) {
-        for (const middleware of middlewares) {
-          if ((await middleware(payload, action)) === false) return false;
+
+      if (!(middlewares && middlewares.length)) continue;
+      for (const middleware of middlewares) {
+        if (isFunction(middleware)) {
+          // If middleware is a simple function
+          if ((await middleware(payload, action, this)) === false) return false;
+        } else if (isFunction(middleware.call)) {
+          // If middleware is a object-like middleware
+          if ((await middleware.call(payload, action, this)) === false) return false;
         }
       }
     }
