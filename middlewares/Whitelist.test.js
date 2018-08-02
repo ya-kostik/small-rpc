@@ -70,4 +70,6 @@ test('Whitelist using', async () => {
   await rpc.call({}, { lib: 'invalid', module: 'invalid', method: 'invalid' });
   expect(counter).toBe(3);
   counter = 0;
+  // not ok
+  expect(await rpc.call({}, { module: 'user', method: 'toString' })).toBeUndefined();
 });

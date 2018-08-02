@@ -94,8 +94,13 @@ class Whitelist {
 
     let node;
     for (const step of path) {
-      if (!node) node = this.tree[step];
-      else node = node[step];
+      if (!node) {
+        node = this.tree[step];
+      } else if (node.hasOwnProperty(step)) {
+        node = node[step];
+      } else {
+        return false;
+      }
 
       if (node === undefined) return false;
       const result = this.runNode(node, payload, action, rpc);
