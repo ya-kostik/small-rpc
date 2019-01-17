@@ -21,11 +21,13 @@ const TYPES = require('./RPC.TYPES');
 class RPC {
   constructor() {
     this.libs = {};
-    this.middlewares = [];
-    this.libsMiddlewares = {};
-    this.modulesMiddlewares = {};
-    this.methodsMiddlewares = {};
-    this.eventsMiddlewares = {};
+    this.before = {
+      lib: {},
+      module: {},
+      method: {},
+      event: {},
+      all: []
+    }
     this.types = RPC.TYPES;
     this.call = this.call.bind(this);
     this.safeCall = this.safeCall.bind(this);
@@ -149,8 +151,8 @@ class RPC {
    * @param  {String} [type='libs'] type of middlewares
    * @return {Array}                middlewares
    */
-  _getMiddlewares(name, type = 'libs') {
-    const place = this[`${type}Middlewares`];
+  _getMiddlewares(name, type = 'lib') {
+    const place = this.before[type];
     let middlewares = place[name];
     if (!middlewares) {
       middlewares = [];
@@ -178,7 +180,7 @@ class RPC {
       throw new TypeError('Middleware is not a function');
     }
     if (!name) {
-      this.middlewares.push(middleware);
+      this.before.all.push(middleware);
       return this;
     }
     this.checkName(name);
@@ -188,11 +190,11 @@ class RPC {
       middlewares = this._getMiddlewares(name);
     } else if (split.length === 2) {
       this.checkModuleName(name);
-      middlewares = this._getMiddlewares(name, 'modules');
+      middlewares = this._getMiddlewares(name, 'module');
     } else if (split.length === 3) {
       this.checkModuleName(`${split[0]}.${split[1]}`);
       if (split[2] === '') throw new TypeError('name of method is invalid');
-      middlewares = this._getMiddlewares(name, 'methods');
+      middlewares = this._getMiddlewares(name, 'method');
     } else {
       throw new TypeError('name is invalid');
     }
@@ -258,12 +260,12 @@ class RPC {
       let middlewares;
 
       if (position === 'all') {
-        middlewares = this.middlewares;
+        middlewares = this.before.all;
       } else {
         if (name.length) name += '.';
         if (position !== 'event') name += names[position];
         else name += names.method;
-        middlewares = this[`${position}sMiddlewares`][name];
+        middlewares = this.before[position][name];
       }
 
       if (!(middlewares && middlewares.length)) continue;

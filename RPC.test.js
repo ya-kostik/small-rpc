@@ -162,13 +162,13 @@ test('adding middlewares', async () => {
     if (!counter[path[4]]) counter[path[4]] = 0;
     counter[path[4]] += 1;
   });
-  expect(rpc.middlewares.length).toBe(1);
-  expect(rpc.libsMiddlewares.main).toBeDefined();
-  expect(rpc.libsMiddlewares.main.length).toBe(1);
-  expect(rpc.modulesMiddlewares['main.module1']).toBeDefined();
-  expect(rpc.modulesMiddlewares['main.module1'].length).toBe(1);
-  expect(rpc.modulesMiddlewares['add.module2']).toBeDefined();
-  expect(rpc.modulesMiddlewares['add.module2'].length).toBe(1);
+  expect(rpc.before.all.length).toBe(1);
+  expect(rpc.before.lib.main).toBeDefined();
+  expect(rpc.before.lib.main.length).toBe(1);
+  expect(rpc.before.module['main.module1']).toBeDefined();
+  expect(rpc.before.module['main.module1'].length).toBe(1);
+  expect(rpc.before.module['add.module2']).toBeDefined();
+  expect(rpc.before.module['add.module2'].length).toBe(1);
   rpc.setModule('module1', { ping() { return 'pong' } });
   rpc.setModule('add.module2', { pinging() { return 'ponging' } });
   await Promise.all([
