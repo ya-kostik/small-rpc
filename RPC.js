@@ -1,6 +1,10 @@
 const isObject = require('lodash/isObject');
 const isFunction = require('lodash/isFunction');
 const pick = require('lodash/pick');
+
+const PathMixin = require('./PathMixin');
+const Inspector = require('./Inspector');
+
 const TYPES = require('./RPC.TYPES');
 
 /**
@@ -21,59 +25,10 @@ const TYPES = require('./RPC.TYPES');
 class RPC {
   constructor() {
     this.libs = {};
-    this.before = {
-      lib: {},
-      module: {},
-      method: {},
-      event: {},
-      all: []
-    }
+    this.before = new Inspector(this);
     this.types = RPC.TYPES;
     this.call = this.call.bind(this);
     this.safeCall = this.safeCall.bind(this);
-  }
-
-  /**
-   * check, is name correct?
-   * @param  {String} name your name
-   * @return {RPC}         this
-   */
-  checkName(name) {
-    if (typeof name !== 'string') {
-      throw new TypeError('name is not a string');
-    }
-    if (!name.length) {
-      throw new TypeError('name is empty');
-    }
-    return this;
-  }
-
-  /**
-   * check, is module name correct?
-   * @param  {String} name lib.module name
-   * @return {Array}       name splited by dot
-   */
-  checkModuleName(name) {
-    const split = name.split('.');
-    if (split.length !== 2) {
-      if (split.length !== 1) {
-        throw new TypeError('invalid name of module, it should be string with two dot notated values');
-      }
-      split.unshift('main');
-    }
-    return split;
-  }
-
-  /**
-   * return true, if middleware is a middleware
-   * @param  {Middleware}  middleware function or object with call method
-   * @return {Boolean}          result of test
-   */
-  isMiddleware(middleware) {
-    if (!middleware) return false;
-    if (isFunction(middleware)) return true;
-    if (middleware && middleware.call) return true;
-    return false;
   }
 
   /**
@@ -146,22 +101,6 @@ class RPC {
   }
 
   /**
-   * get middlewares by name and type
-   * @param  {String} name          of lib or lib.module
-   * @param  {String} [type='libs'] type of middlewares
-   * @return {Array}                middlewares
-   */
-  _getMiddlewares(name, type = 'lib') {
-    const place = this.before[type];
-    let middlewares = place[name];
-    if (!middlewares) {
-      middlewares = [];
-      place[name] = middlewares;
-    }
-    return middlewares;
-  }
-
-  /**
    * use middleware;
    * you can rpc.use(middleware) to add middleware for all libs,
    * rpc(lib, middleware) to add middleware for a specific lib by name,
@@ -172,34 +111,7 @@ class RPC {
    * @return {RPC}               this
    */
   use(name, middleware) {
-    if (!middleware) {
-      middleware = name;
-      name = null;
-    }
-    if (!this.isMiddleware(middleware)) {
-      throw new TypeError('Middleware is not a function');
-    }
-    if (!name) {
-      this.before.all.push(middleware);
-      return this;
-    }
-    this.checkName(name);
-    const split = name.split('.');
-    let middlewares;
-    if (split.length === 1) {
-      middlewares = this._getMiddlewares(name);
-    } else if (split.length === 2) {
-      this.checkModuleName(name);
-      middlewares = this._getMiddlewares(name, 'module');
-    } else if (split.length === 3) {
-      this.checkModuleName(`${split[0]}.${split[1]}`);
-      if (split[2] === '') throw new TypeError('name of method is invalid');
-      middlewares = this._getMiddlewares(name, 'method');
-    } else {
-      throw new TypeError('name is invalid');
-    }
-    middlewares.push(middleware);
-    return this;
+    this.before.use(name, middleware);
   }
 
   /**
@@ -217,72 +129,6 @@ class RPC {
   }
 
   /**
-   * create doted path from action params
-   * @param {Object} action
-   * @param {Boolean} [isArray=false] path will be an array, not a string
-   * @param {Boolean} [addMethod=false] add method or event into a path
-   * @return {String|Array}
-   */
-  makePathFromAction(action, isArray = false, addMethod = false) {
-    if (isArray) {
-      let path = [];
-      if (action.lib) path[0] = action.lib + '';
-      else path[0] = 'main';
-      path[1] = action.module + '';
-      if (addMethod) {
-        if (action.method) path[2] = action.method + '';
-        else if (action.event) path[2] = action.event + '';
-      }
-      return path;
-    }
-    let path = '';
-    if (action.lib) path += action.lib + '.';
-    path += action.module;
-    if (addMethod) {
-      if (action.method) path += '.' + action.method;
-      else if (action.event) path += '.' + action.event;
-    }
-    return path;
-  }
-
-  /**
-   * call all midllewares for a specific action
-   * @param  {Object}  payload of current rpc request
-   * @param  {Object}  action
-   * @param  {Array}   positions names of middlewares to call
-   * @return {Promise}
-   */
-  async _callMiddlewares(payload, action, positions = ['all', 'lib', 'module', 'method']) {
-    const [lib, module, method] = this.makePathFromAction(action, true, true);
-    const names = { lib, module, method };
-    let name = '';
-    for (const position of positions) {
-      let middlewares;
-
-      if (position === 'all') {
-        middlewares = this.before.all;
-      } else {
-        if (name.length) name += '.';
-        if (position !== 'event') name += names[position];
-        else name += names.method;
-        middlewares = this.before[position][name];
-      }
-
-      if (!(middlewares && middlewares.length)) continue;
-      for (const middleware of middlewares) {
-        if (isFunction(middleware)) {
-          // If middleware is a simple function
-          if ((await middleware(payload, action, this)) === false) return false;
-        } else if (isFunction(middleware.call)) {
-          // If middleware is a object-like middleware
-          if ((await middleware.call(payload, action, this)) === false) return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  /**
    * Process action before making things with it
    * @param  {Object}  payload   of rpc request
    * @param  {Object}  action    action
@@ -291,7 +137,7 @@ class RPC {
    */
   async _processActionBefore(payload, action, positions) {
     const path = this.makePathFromAction(action);
-    const resultFromMiddlewares = await this._callMiddlewares(payload, action, positions);
+    const resultFromMiddlewares = await this.before.call(payload, action, positions);
     if (resultFromMiddlewares === false) return;
     const module = this.getModule(path);
     if (!module) throw new RPC.Error('Module not found');
@@ -406,4 +252,4 @@ RPC.TYPES = Object.freeze({
   'client/rpc': TYPES.client
 });
 
-module.exports = RPC;
+module.exports = PathMixin(RPC);
