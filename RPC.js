@@ -26,6 +26,7 @@ class RPC {
   constructor() {
     this.libs = {};
     this.before = new Inspector(this);
+    this.after = new Inspector(this);
     this.types = RPC.TYPES;
     this.call = this.call.bind(this);
     this.safeCall = this.safeCall.bind(this);
@@ -179,6 +180,7 @@ class RPC {
    */
   async call(payload, action) {
     this.checkCallAction(action);
+    // Before middlewares
     const beforeResult = await this._processActionBefore(payload, action);
     if (!beforeResult) return;
     const module = beforeResult.module;
@@ -193,6 +195,9 @@ class RPC {
     } else {
       result = await module[action.method]();
     }
+    // After middlewares
+    const afterResult = await this.after.call(payload, action);
+    if (!afterResult) return;
     const out = this.makeOutAction(result, action);
     return out;
   }
