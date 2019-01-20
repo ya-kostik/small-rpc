@@ -195,10 +195,10 @@ class RPC {
     } else {
       result = await module[action.method]();
     }
-    // After middlewares
-    const afterResult = await this.after.call(payload, action);
-    if (!afterResult) return;
     const out = this.makeOutAction(result, action);
+    // After middlewares
+    const afterResult = await this.after.call(payload, action, out);
+    if (!afterResult) return;
     return out;
   }
 

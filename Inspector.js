@@ -73,10 +73,11 @@ class Inspector {
    * call all midllewares for a specific action
    * @param  {Object}  payload of current rpc request
    * @param  {Object}  action
+   * @param  {Mixed}   subload additional arguments for middleware
    * @param  {Array}   positions names of middlewares to call
    * @return {Promise}
    */
-  async call(payload, action, positions = ['all', 'lib', 'module', 'method']) {
+  async call(payload, action, subload = undefined, positions = ['all', 'lib', 'module', 'method']) {
     const [lib, module, method] = this.makePathFromAction(action, true, true);
     const names = { lib, module, method };
     let name = '';
@@ -96,10 +97,10 @@ class Inspector {
       for (const middleware of middlewares) {
         if (isFunction(middleware)) {
           // If middleware is a simple function
-          if ((await middleware(payload, action, this)) === false) return false;
+          if ((await middleware(payload, action, this, subload)) === false) return false;
         } else if (isFunction(middleware.call)) {
           // If middleware is a object-like middleware
-          if ((await middleware.call(payload, action, this)) === false) return false;
+          if ((await middleware.call(payload, action, this, subload)) === false) return false;
         }
       }
     }

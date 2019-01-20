@@ -243,3 +243,13 @@ test('after middlewares', async () => {
   expect(counter).toBe(4);
   expect(res).not.toBeDefined();
 });
+
+test('after middlewares has result action', (cb) => {
+  const rpc = new RPC();
+  rpc.setModule('main', { hi: () => true });
+  rpc.after.use((payload, action, rpc, out) => {
+    expect(out.payload).toBe(true);
+    cb();
+  });
+  return rpc.call({}, { module: 'main', method: 'hi' });
+});
