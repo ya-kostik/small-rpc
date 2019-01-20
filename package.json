@@ -23,7 +23,9 @@
   "files": [
     "RPC.js",
     "RPC.TYPES.js",
-    "middlewares/Whitelist.js"
+    "middlewares/Whitelist.js",
+    "Inspector.js",
+    "PathMixin.js"
   ],
   "devDependencies": {
     "babel-eslint": "^8.2.3",
