@@ -1,4 +1,4 @@
-/* global test expect */
+/* global test expect jest */
 
 const RPC = require('./RPC');
 // const EE = require('events');
@@ -221,4 +221,25 @@ test('safe call catch errors', async () => {
   result = await rpc.safeCall({}, { method: 'hi' });
   expect(result.payload.code).toBe(400);
   RPC.log = console;
+});
+
+test('after middlewares', async () => {
+  let counter = 0;
+  const middleware = jest.fn(() => counter += 1);
+  const rpc = new RPC();
+  rpc.setModule('main', { hi: () => counter += 1 });
+  RPC.log = null;
+  rpc.after.use(middleware);
+  let res = await rpc.call({}, { module: 'main', method: 'hi' });
+  expect(middleware.mock.calls.length).toBe(1);
+  // Before after middlewares it should be 1
+  expect(res.payload).toBe(1);
+  // After after middlewares =) it should be 2
+  expect(counter).toBe(2);
+  const stopMiddleware = jest.fn(() => false);
+  rpc.after.use(stopMiddleware);
+  res = await rpc.call({}, { module: 'main', method: 'hi' });
+  expect(middleware.mock.calls.length).toBe(2);
+  expect(counter).toBe(4);
+  expect(res).not.toBeDefined();
 });
