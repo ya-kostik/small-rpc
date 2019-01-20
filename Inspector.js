@@ -2,7 +2,9 @@ const isFunction = require('lodash/isFunction');
 const PathMixin = require('./PathMixin');
 
 class Inspector {
-  constructor() {
+  constructor(rpc) {
+    this.rpc = rpc;
+
     this.lib = {};
     this.module = {};
     this.method = {};
@@ -97,10 +99,10 @@ class Inspector {
       for (const middleware of middlewares) {
         if (isFunction(middleware)) {
           // If middleware is a simple function
-          if ((await middleware(payload, action, this, subload)) === false) return false;
+          if ((await middleware(payload, action, this.rpc, subload)) === false) return false;
         } else if (isFunction(middleware.call)) {
           // If middleware is a object-like middleware
-          if ((await middleware.call(payload, action, this, subload)) === false) return false;
+          if ((await middleware.call(payload, action, this.rpc, subload)) === false) return false;
         }
       }
     }
