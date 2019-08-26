@@ -1,6 +1,6 @@
 {
   "name": "small-rpc",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Small RRPC library for your project or microservice",
   "main": "RPC.js",
   "repository": "https://github.com/ya-kostik/small-rpc",
