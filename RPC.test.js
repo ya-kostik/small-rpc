@@ -251,5 +251,5 @@ test('after middlewares has result action', (cb) => {
     expect(out.payload).toBe(true);
     cb();
   });
-  return rpc.call({}, { module: 'main', method: 'hi' });
+  rpc.call({}, { module: 'main', method: 'hi' });
 });

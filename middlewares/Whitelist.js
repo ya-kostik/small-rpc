@@ -96,7 +96,7 @@ class Whitelist {
     for (const step of path) {
       if (!node) {
         node = this.tree[step];
-      } else if (node.hasOwnProperty(step)) {
+      } else if (Object.prototype.hasOwnProperty.call(node, step)) {
         node = node[step];
       } else {
         return false;
