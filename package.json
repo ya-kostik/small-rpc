@@ -1,6 +1,6 @@
 {
   "name": "small-rpc",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "Small RRPC library for your project or microservice",
   "main": "RPC.js",
   "repository": "https://github.com/ya-kostik/small-rpc",
@@ -28,8 +28,8 @@
     "PathMixin.js"
   ],
   "devDependencies": {
-    "eslint": "^7.27.0",
-    "jest": "^27.0.3"
+    "eslint": "^8.2.0",
+    "jest": "^27.3.1"
   },
   "dependencies": {
     "lodash": "^4.17.21"

@@ -41,7 +41,7 @@ class RPC {
   setLib(name, lib) {
     if (isObject(name)) {
       lib = name;
-      name = 'main'
+      name = 'main';
     }
     this.checkName(name);
     if (!isObject(lib)) throw new TypeError('lib is not an object');

@@ -15,12 +15,12 @@ test('Whitelist using', async () => {
   const mainLib = {
     user: { hi: add, getPassword: add },
     group: { hi: add, getSecret: add }
-  }
+  };
 
   const addLib = {
     me: { hi: add },
     john: { hi: add, bye: add }
-  }
+  };
 
   rpc.use(whitelist);
   rpc.setLib(mainLib);

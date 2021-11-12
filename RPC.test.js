@@ -32,7 +32,7 @@ test('set, get, remove, replace rpc libs', () => {
   expect(() => rpc.setLib(null, null)).toThrow(new TypeError('name is not a string'));
   expect(() => rpc.setLib('', null)).toThrow(new TypeError('name is empty'));
   expect(() => rpc.getModule('main.a.b.c')).
-  toThrow(new TypeError('invalid name of module, it should be string with two dot notated values'));
+    toThrow(new TypeError('invalid name of module, it should be string with two dot notated values'));
   // get module returns main module
   expect(rpc.getLib()).toBe(lib);
   expect(rpc.getModule('a')).toBe(lib.a);
@@ -69,7 +69,7 @@ test('call to rpc', async () => {
       return { echo: true };
     },
     abc: () => ({ a: 'a', b: 'b', c: 'c' })
-  }
+  };
   const rpc = new RPC();
   rpc.setModule('hello', module);
   // flat
@@ -88,7 +88,7 @@ test('call to rpc', async () => {
   });
   expect(result.payload).
   // merging
-  toBe(echoMessage + '.' + echoMessage + '.' + echoMessage);
+    toBe(echoMessage + '.' + echoMessage + '.' + echoMessage);
   result = await rpc.call({}, {
     module: 'hello',
     method: 'merge',
@@ -137,7 +137,7 @@ test('adding middlewares', async () => {
     [path[2]]: 2,
     [path[3]]: 1,
     [path[4]]: 2
-  }
+  };
   const counter = {};
   const rpc = new RPC();
   rpc.use(() => {
@@ -169,8 +169,8 @@ test('adding middlewares', async () => {
   expect(rpc.before.module['main.module1'].length).toBe(1);
   expect(rpc.before.module['add.module2']).toBeDefined();
   expect(rpc.before.module['add.module2'].length).toBe(1);
-  rpc.setModule('module1', { ping() { return 'pong' } });
-  rpc.setModule('add.module2', { pinging() { return 'ponging' } });
+  rpc.setModule('module1', { ping() { return 'pong'; } });
+  rpc.setModule('add.module2', { pinging() { return 'ponging'; } });
   await Promise.all([
     rpc.call({}, {
       module: 'module1',
@@ -199,7 +199,7 @@ test('stop middlewares', async () => {
   rpc.use(() => {
     counter += 1;
   });
-  rpc.setModule('module1', { ping() { return 'pong' } });
+  rpc.setModule('module1', { ping() { return 'pong'; } });
   const result = await rpc.safeCall({}, {
     module: 'module1',
     method: 'ping'
